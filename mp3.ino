@@ -53,8 +53,8 @@ digitalWrite(buttonSelect,HIGH);
 
 mySerial.begin (9600);
 delay(1000);
-Serial.begin(1200); 
-Serial.println("----Volume----");
+//Serial.begin(1200); 
+//Serial.println("----Volume----");
 playFirst();
 isPlaying = true;
 lcd.setBacklightPin(BACKLIGHT_PIN,POSITIVE);
@@ -84,7 +84,7 @@ if(diff > TOLERANCE)
 {
  oldVal = val; 
  setVolume(val);
- Serial.println(val);
+// Serial.println(val);
  lcd.setCursor ( 0, 1 );
  lcd.print ("Volume set to "); 
  lcd.setCursor ( 14, 1 );  
@@ -93,11 +93,7 @@ if(diff > TOLERANCE)
  lcd.print(val);
  delay(1000);
  lcd.setCursor ( 0, 1 );
- lcd.print ("                ");
-//lcd.setCursor(0,1);
-//lcd.print ("Playing Album ");  
-//lcd.setCursor ( 14, 1 );
-//lcd.print (album);      
+ lcd.print ("                ");    
 
 }   
  if (digitalRead(buttonPause) == ACTIVATED)
@@ -145,7 +141,6 @@ if(diff > TOLERANCE)
   }
   if (digitalRead(buttonSelect) == ACTIVATED) 
   {
-    Serial.println("hi");
     choose_song();
   }
 }
