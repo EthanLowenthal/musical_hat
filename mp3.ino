@@ -58,13 +58,9 @@ isPlaying = true;
 lcd.setBacklightPin(BACKLIGHT_PIN,POSITIVE);
 lcd.setBacklight(HIGH);
 lcd.begin (16,2); //  My LCD was 16x2
-
 lcd.home ();
 lcd.print("Playing         ");  
-lcd.setCursor ( 0, 1 );
-lcd.print ("Playing Album ");  
-lcd.setCursor ( 14, 1 );
-lcd.print (album); 
+
 execute_CMD(0x4D,0,0);  
 }
 #define TOLERANCE 1
@@ -82,16 +78,8 @@ if(diff > TOLERANCE)
 {
  oldVal = val; 
  setVolume(val);
- lcd.setCursor ( 0, 1 );
- lcd.print ("Volume set to "); 
- lcd.setCursor ( 14, 1 );  
- lcd.print("  ");
- lcd.setCursor ( 14, 1 );  
- lcd.print(val);
- delay(1000);
- lcd.setCursor ( 0, 1 );
- lcd.print ("                ");    
-
+ displayText("Volume set to ",0,0,1,true,false);
+ displayText(String(val),1000,14,1,true,true);   
 }   
  if (digitalRead(buttonPause) == ACTIVATED)
   {
@@ -99,14 +87,12 @@ if(diff > TOLERANCE)
     {
       pause();
       isPlaying = false;
-      lcd.setCursor(0,0);
-      lcd.print("Paused          ");
+      displayText("Paused",0,0,0,true,false);
     }else
     {
       isPlaying = true;
       play();
-      lcd.setCursor(0,0);
-      lcd.print("Playing         ");
+      displayText("Playing",0,0,0,true,false);
     }
   }
 
@@ -116,11 +102,8 @@ if(diff > TOLERANCE)
     if(isPlaying)
     {
       playNext();
-      lcd.setCursor(0,0);
-      lcd.print("Next            ");
-      delay(1000);
-      lcd.setCursor(0,0);
-      lcd.print("Playing         ");
+      displayText("Next",1000,0,0,true,false);
+      displayText("Playing",0,0,0,true,false);
     }
   }
 
@@ -129,11 +112,8 @@ if(diff > TOLERANCE)
     if(isPlaying)
     {
       playPrevious();
-      lcd.setCursor(0,0);
-      lcd.print("Previous        ");
-      delay(1000);
-      lcd.setCursor(0,0);
-      lcd.print("Playing         ");
+      displayText("Previous",1000,0,0,true,false);
+      displayText("Playing",0,0,0,true,false);
     }
   }
   if (digitalRead(buttonSelect) == ACTIVATED) 
@@ -179,47 +159,44 @@ void playPrevious()
 
 void choose_song(){
   while (true) {
-    lcd.setCursor ( 0, 0 );  
-    lcd.print("Choose Song     ");
-    lcd.setCursor ( 0, 1 );
-    lcd.print("Play song       ");
-    lcd.setCursor ( 10, 1 );
-    lcd.print(song);
+    displayText("Choose Song",0,0,0,true,false);
+    displayText("Play song",0,0,1,true,false);
+    displayText(String(song),0,10,1,false,false);
     delay(250);
     if (digitalRead(buttonPrevious) == ACTIVATED){if (song > 0){
       song --;
-      lcd.setCursor ( 0, 1 );
-      lcd.print("Play song       ");
-      lcd.setCursor ( 10, 1 );
-      lcd.print(song);
+      displayText("Play song",0,0,1,true,false);
+      displayText(String(song),0,10,1,false,false);
       delay(250);
       }} 
     if (digitalRead(buttonNext) == ACTIVATED){if (song < 255){
       song ++;
-      lcd.setCursor ( 0, 1 );
-      lcd.print("Play song       ");
-      lcd.setCursor ( 10, 1 );
-      lcd.print(song);
+      displayText("Play song",0,0,1,true,false);
+      displayText(String(song),0,10,1,false,false);
       delay(250);
       }}
     if (digitalRead(buttonPause) == ACTIVATED){
-      long previousMillisSelect = millis();
       execute_CMD(0x03, 0, song);
-      lcd.setCursor ( 0, 0 );  
-      lcd.print("Playing         ");
-      lcd.setCursor ( 0, 1 );  
-      lcd.print("Playing song    ");
-      lcd.setCursor ( 13, 1 );
-      lcd.print(song);
-      unsigned long currentMillisSelect = millis();
-      delay(1000);
-//      if(currentMillisSelect - previousMillisSelect > 3000) {
-      lcd.setCursor ( 0, 1 );
-      lcd.print ("                "); 
-//      }
+      displayText("Playing",0,0,0,true,false);
+      displayText("Playing song",0,0,1,true,false);
+      displayText(String(song),1000,13,1,true,true);
       break;
       }
     }
+}
+
+void displayText(String text, int interval, int line, int row, boolean fillSpace, boolean wipe) {
+  lcd.setCursor (line,row);
+  if (fillSpace) {
+    for (int i=text.length(); i < 16; i++){text += " ";}
+    lcd.print(text);
+   }
+  else{lcd.print(text);}
+  delay(interval);
+  if (wipe){
+  lcd.setCursor(0,line);
+  lcd.print("                ");
+  }
 }
 
 void setVolume(int volume)
