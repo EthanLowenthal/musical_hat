@@ -27,9 +27,11 @@ SoftwareSerial mySerial(10, 11);
 # define Version_Byte 0xFF
 # define Command_Length 0x06
 # define End_Byte 0xEF
-# define Acknowledge 0x00 //Returns info with command 0x41 [0x01: info, 0x00: no info]
+# define Acknowledge 0x01 //Returns info with command 0x41 [0x01: info, 0x00: no info]
 
 # define ACTIVATED LOW
+int lastLcdBacklight = millis();
+int lcdBacklightMills = millis();
 int album = 1;
 int song = 1;
 int buttonNext = 2;
@@ -52,6 +54,7 @@ pinMode(buttonSelect, INPUT);
 digitalWrite(buttonSelect,HIGH);
 
 mySerial.begin (9600);
+Serial.begin (4800);
 delay(1000);
 playFirst();
 isPlaying = true;
@@ -59,9 +62,7 @@ lcd.setBacklightPin(BACKLIGHT_PIN,POSITIVE);
 lcd.setBacklight(HIGH);
 lcd.begin (16,2); //  My LCD was 16x2
 lcd.home ();
-lcd.print("Playing         ");  
-
-execute_CMD(0x4D,0,0);  
+lcd.print("Playing         ");    
 }
 #define TOLERANCE 1
 
@@ -70,6 +71,10 @@ int oldVal = 0;
 
 
 void loop () { 
+lcdBacklightMills = millis();
+if(lcdBacklightMills - lastLcdBacklight > 5000) {
+  lcd.setBacklight(LOW);
+}
 
 int val = analogRead(A0)/33.5;
 delay(15);
@@ -186,6 +191,8 @@ void choose_song(){
 }
 
 void displayText(String text, int interval, int line, int row, boolean fillSpace, boolean wipe) {
+  lcd.setBacklight(HIGH);
+  lastLcdBacklight = millis();
   lcd.setCursor (line,row);
   if (fillSpace) {
     for (int i=text.length(); i < 16; i++){text += " ";}
@@ -216,6 +223,8 @@ Par1, Par2, highByte(checksum), lowByte(checksum), End_Byte};
 //Send the command line to the module
 for (byte k=0; k<10; k++)
 {
-mySerial.write( Command_line[k]);
+//Serial.println(Command_line[k]);
+//Serial.println("-------");
+mySerial.write(Command_line[k]);
 }
 }
