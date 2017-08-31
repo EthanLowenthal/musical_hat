@@ -27,7 +27,7 @@ SoftwareSerial mySerial(10, 11);
 # define Version_Byte 0xFF
 # define Command_Length 0x06
 # define End_Byte 0xEF
-# define Acknowledge 0x01 //Returns info with command 0x41 [0x01: info, 0x00: no info]
+# define Acknowledge 0x00 //Returns info with command 0x41 [0x01: info, 0x00: no info]
 
 # define ACTIVATED LOW
 int lastLcdBacklight = millis();
