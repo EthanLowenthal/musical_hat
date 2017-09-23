@@ -1,3 +1,6 @@
+
+
+
 ///              MP3 PLAYER PROJECT
 /// http://educ8s.tv/arduino-mp3-player/
 //////////////////////////////////////////
@@ -5,6 +8,8 @@
 #include <Wire.h>
 #include <LCD.h>
 #include <LiquidCrystal_I2C.h>
+#include <Keypad.h>
+
 
 #define I2C_ADDR    0x3F // <<----- Add your address here.  Find it from I2C Scanner
 #define BACKLIGHT_PIN     3
@@ -34,12 +39,11 @@ int lastLcdBacklight = millis();
 int lcdBacklightMills = millis();
 int album = 1;
 int song = 1;
-int buttonNext = 2;
+int buttonNext = 4;
 int buttonPause = 3;
-int buttonPrevious = 4;
+int buttonPrevious = 2;
 int buttonSelect = 5;
 boolean isPlaying = false;
-
 
 
 void setup () {
@@ -71,6 +75,7 @@ int oldVal = 0;
 
 
 void loop () { 
+  
 lcdBacklightMills = millis();
 if(lcdBacklightMills - lastLcdBacklight > 5000) {
   lcd.setBacklight(LOW);
@@ -223,8 +228,6 @@ Par1, Par2, highByte(checksum), lowByte(checksum), End_Byte};
 //Send the command line to the module
 for (byte k=0; k<10; k++)
 {
-//Serial.println(Command_line[k]);
-//Serial.println("-------");
 mySerial.write(Command_line[k]);
 }
 }
