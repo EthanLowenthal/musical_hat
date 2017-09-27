@@ -8,7 +8,9 @@
 #include <Wire.h>
 #include <LCD.h>
 #include <LiquidCrystal_I2C.h>
-#include <Keypad.h>
+#include <DFRobotDFPlayerMini.h>
+#include <SoftwareSerial.h>
+#include <Arduino.h>
 
 
 #define I2C_ADDR    0x3F // <<----- Add your address here.  Find it from I2C Scanner
@@ -25,24 +27,26 @@ int n = 1;
 
 LiquidCrystal_I2C  lcd(I2C_ADDR,En_pin,Rw_pin,Rs_pin,D4_pin,D5_pin,D6_pin,D7_pin);
 
-#include "SoftwareSerial.h"
 
 SoftwareSerial mySerial(10, 11);
-# define Start_Byte 0x7E
-# define Version_Byte 0xFF
-# define Command_Length 0x06
-# define End_Byte 0xEF
-# define Acknowledge 0x00 //Returns info with command 0x41 [0x01: info, 0x00: no info]
+
+DFRobotDFPlayerMini myDFPlayer;
+void printDetail(uint8_t type, int value);
+
+//# define Start_Byte 0x7E
+//# define Version_Byte 0xFF
+//# define Command_Length 0x06
+//# define End_Byte 0xEF
+//# define Acknowledge 0x01 //Returns info with command 0x41 [0x01: info, 0x00: no info]
 
 # define ACTIVATED LOW
 int lastLcdBacklight = millis();
 int lcdBacklightMills = millis();
-int album = 1;
 int song = 1;
 int buttonNext = 4;
 int buttonPause = 3;
 int buttonPrevious = 2;
-int buttonSelect = 5;
+int buttonSelect = 5 ;
 boolean isPlaying = false;
 
 
@@ -59,14 +63,44 @@ digitalWrite(buttonSelect,HIGH);
 
 mySerial.begin (9600);
 Serial.begin (4800);
+
+
+Serial.println();
+Serial.println(F("DFRobot DFPlayer Mini Demo"));
+Serial.println(F("Initializing DFPlayer ... (May take 3~5 seconds)"));
+
+if (!myDFPlayer.begin(mySerial)) {  //Use softwareSerial to communicate with mp3.
+  Serial.println(F("Unable to begin:"));
+  Serial.println(F("1.Please recheck the connection!"));
+  Serial.println(F("2.Please insert the SD card!"));
+  while(true);
+}
+Serial.println(F("DFPlayer Mini online."));
+
+myDFPlayer.setTimeOut(500); //Set serial communictaion time out 500ms
+myDFPlayer.EQ(DFPLAYER_EQ_NORMAL);
+myDFPlayer.outputDevice(DFPLAYER_DEVICE_SD);
+myDFPlayer.enableDAC();
+myDFPlayer.randomAll();
+
+
+
 delay(1000);
 playFirst();
+pause();
+play();
 isPlaying = true;
+
+int current_song  = myDFPlayer.readCurrentFileNumber();
+delay(500);
+int songs = myDFPlayer.readFileCountsInFolder(0);
+delay(500);
+
 lcd.setBacklightPin(BACKLIGHT_PIN,POSITIVE);
 lcd.setBacklight(HIGH);
 lcd.begin (16,2); //  My LCD was 16x2
 lcd.home ();
-lcd.print("Playing         ");    
+lcd.print("Playing         ");
 }
 #define TOLERANCE 1
 
@@ -75,6 +109,10 @@ int oldVal = 0;
 
 
 void loop () { 
+
+  if (myDFPlayer.available()) {
+    printDetail(myDFPlayer.readType(), myDFPlayer.read()); //Print the detail message from DFPlayer to handle different errors and states.
+  }
   
 lcdBacklightMills = millis();
 if(lcdBacklightMills - lastLcdBacklight > 5000) {
@@ -135,35 +173,39 @@ if(diff > TOLERANCE)
 
 void playFirst()
 {
-  execute_CMD(0x3F, 0, 0);
-  delay(500);
+//  execute_CMD(0x3F, 0, 0);
+//  delay(500);
   setVolume(15);
   delay(500);
-  execute_CMD(0x11,0,1); 
+  myDFPlayer.play(1);
   delay(500);
 }
 
 void pause()
 {
-  execute_CMD(0x0E,0,0);
+  myDFPlayer.pause();
+//  execute_CMD(0x0E,0,0);
   delay(500);
 }
 
 void play()
 {
-  execute_CMD(0x0D,0,1); 
+  myDFPlayer.start();
+//  execute_CMD(0x0D,0,1); 
   delay(500);
 }
 
 void playNext()
 {
-  execute_CMD(0x01,0,1);
+  myDFPlayer.next();
+//  execute_CMD(0x01,0,1);
   delay(500);
 }
 
 void playPrevious()
 {
-  execute_CMD(0x02,0,1);
+  myDFPlayer.previous();
+//  execute_CMD(0x02,0,1);
   delay(500);
 }
 
@@ -186,7 +228,8 @@ void choose_song(){
       delay(250);
       }}
     if (digitalRead(buttonPause) == ACTIVATED){
-      execute_CMD(0x03, 0, song);
+      myDFPlayer.play(song);
+//      execute_CMD(0x03, 0, song);
       displayText("Playing",0,0,0,true,false);
       displayText("Playing song",0,0,1,true,false);
       displayText(String(song),1000,13,1,true,true);
@@ -213,21 +256,79 @@ void displayText(String text, int interval, int line, int row, boolean fillSpace
 
 void setVolume(int volume)
 {
-  execute_CMD(0x06, 0, volume); // Set the volume (0x00~0x30)
+  myDFPlayer.volume(volume);
+//  execute_CMD(0x06, 0, volume); // Set the volume (0x00~0x30)
   delay(250);
 }
 
-void execute_CMD(byte CMD, byte Par1, byte Par2)
-// Excecute the command and parameters
-{
-// Calculate the checksum (2 bytes)
-word checksum = -(Version_Byte + Command_Length + CMD + Acknowledge + Par1 + Par2);
-// Build the command line
-byte Command_line[10] = { Start_Byte, Version_Byte, Command_Length, CMD, Acknowledge,
-Par1, Par2, highByte(checksum), lowByte(checksum), End_Byte};
-//Send the command line to the module
-for (byte k=0; k<10; k++)
-{
-mySerial.write(Command_line[k]);
-}
+//void execute_CMD(byte CMD, byte Par1, byte Par2)
+//// Excecute the command and parameters
+//{
+//// Calculate the checksum (2 bytes)
+//word checksum = -(Version_Byte + Command_Length + CMD + Acknowledge + Par1 + Par2);
+//// Build the command line
+//byte Command_line[10] = { Start_Byte, Version_Byte, Command_Length, CMD, Acknowledge,
+//Par1, Par2, highByte(checksum), lowByte(checksum), End_Byte};
+////Send the command line to the module
+//for (byte k=0; k<10; k++)
+//{
+//mySerial.write(Command_line[k]);
+//}
+//}
+
+void printDetail(uint8_t type, int value){
+  switch (type) {
+    case TimeOut:
+      Serial.println(F("Time Out!"));
+      break;
+    case WrongStack:
+      Serial.println(F("Stack Wrong!"));
+      break;
+    case DFPlayerCardInserted:
+      Serial.println(F("Card Inserted!"));
+      break;
+    case DFPlayerCardRemoved:
+      Serial.println(F("Card Removed!"));
+      break;
+    case DFPlayerCardOnline:
+      Serial.println(F("Card Online!"));
+      break;
+    case DFPlayerPlayFinished:
+      Serial.print(F("Number:"));
+      Serial.print(value);
+      Serial.println(F(" Play Finished!"));
+      myDFPlayer.next();
+      break;
+    case DFPlayerError:
+      Serial.print(F("DFPlayerError:"));
+      switch (value) {
+        case Busy:
+          Serial.println(F("Card not found"));
+          break;
+        case Sleeping:
+          Serial.println(F("Sleeping"));
+          break;
+        case SerialWrongStack:
+          Serial.println(F("Get Wrong Stack"));
+          break;
+        case CheckSumNotMatch:
+          Serial.println(F("Check Sum Not Match"));
+          break;
+        case FileIndexOut:
+          Serial.println(F("File Index Out of Bound"));
+          break;
+        case FileMismatch:
+          Serial.println(F("Cannot Find File"));
+          play();
+          break;
+        case Advertise:
+          Serial.println(F("In Advertise"));
+          break;
+        default:
+          break;
+      }
+      break;
+    default:
+      break;
+  }
 }
