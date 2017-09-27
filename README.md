@@ -1,4 +1,4 @@
 # musical_hat
-A hat that plays music
+A hat that plays music.
 Its gunna be cool
-![alt text](http://images/FullSizeRender-2.jpg)
+![PCB](https://ethansawesomewebsite.tk/img/hat/FullSizeRender-2.jpg)
